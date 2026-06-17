@@ -1,0 +1,67 @@
+Final polish, making the app production-ready, wiring real API integration, and deploying.
+
+TASK:
+1. RESPONSIVE LAYOUT:
+   - Mobile (<768px): single column, full-width textarea, full-width Generate button, Recent Analyses as a collapsible panel below input
+   - Desktop (≥1024px): left sidebar sticky, right content area scrollable
+   - Test both viewports; use Tailwind breakpoints (sm, md, lg, xl) consistently
+
+2. KEYBOARD ACCESSIBILITY:
+   - All buttons, inputs, selects: visible focus states (ring, outline, or glow in accent color)
+   - Tab order: textarea → file upload → sample chips → meeting type selector → Generate button
+   - Escape key: closes any open modals/dialogs
+   - Test with keyboard navigation only (no mouse)
+
+3. LIVE API MODE SETUP (optional for MVP, required for production):
+   - In Framework 4, the Edge Function currently calls parseTranscript (offline mode)
+   - If you want live mode: check for ANTHROPIC_API_KEY (or OPENAI_API_KEY) as a Replit secret
+   - If present: modify the Edge Function to call the AI provider:
+     * Prompt: "You are a meeting analyst. Given this transcript of a {meetingType} meeting, extract and return ONLY valid JSON (no markdown, no preamble) with keys: summary (string), decisions (array of strings), action_items (array of {description, owner_name}), risks (array), open_questions (array), next_steps (array). Transcript: {transcript}"
+     * Parse the response as JSON; if parsing fails, log the error and fall back to parseTranscript (offline mode)
+     * Return the same structured object
+   - This way the UI is identical whether live or offline; Novus can auto-instrument the codebase and see both paths working
+
+4. ANALYTICS INSTRUMENTATION (Novus-ready):
+   - Keep the trackEvent() calls from Framework 6
+   - For now, just console.log them (or a lightweight client-side events table)
+   - When the repo is connected to Novus (novus.ai), Novus auto-instruments these call sites and surfaces what's worth paying attention to — no manual tagging dashboard needed
+   - trackEvent calls should include: demo_chip_clicked, generate_started, generate_completed, copy_clicked, export_slack_clicked, export_email_clicked, recent_analysis_opened
+
+5. ERROR HANDLING:
+   - If Supabase query fails: show a toast "Unable to load. Please refresh." and keep the current output visible
+   - If parsing fails: show a toast "Output couldn't be fully structured. Showing summary." and display the raw summary text only instead of broken cards
+   - If clipboard fails: show the fallback textarea modal
+   - No silent failures; every error has a user-facing message
+
+6. DEPLOY:
+   - Push to GitHub (or keep on Replit, whichever is your workflow)
+   - If Replit: `replit build && replit deploy` or use the Replit UI to deploy
+   - If GitHub + Vercel/Netlify: `git push`, auto-deploys on main branch
+   - Set environment variables in the deployment platform (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, ANTHROPIC_API_KEY if live mode)
+   - Test the public URL in multiple browsers and on mobile
+
+7. FINAL CHECKLIST (Definition of Done):
+   - [ ] Open the public URL
+   - [ ] Click a sample meeting chip (no typing needed)
+   - [ ] Click Generate
+   - [ ] Watch a real 5-step progressive reveal with checkmarks
+   - [ ] See all five output sections correctly populated
+   - [ ] See at least one "Unassigned" owner badge (amber-tinted)
+   - [ ] See at least one risk and one open question
+   - [ ] Copy the result with a real toast confirmation
+   - [ ] See it appear in Recent Analyses
+   - [ ] Reload the page and still see it there
+   - [ ] Visual system matches novus.ai colors/fonts
+   - [ ] Mobile view works (single column, full-width buttons, collapsible history)
+   - [ ] Keyboard nav works (Tab, Shift+Tab, Enter, Escape)
+   - [ ] No console errors
+   - [ ] Deployment successful, public URL is live
+
+Once all pass, you're ship-ready for judges.
+
+BONUS (if time):
+- Add a "Powered by Novus" badge in the header (ghost style, monospace, small) — a nod to the analytics partner
+- Add a keyboard shortcut cheat: press ? to show a modal with keyboard shortcuts (Ctrl+Enter to Generate, Ctrl+C to copy, etc.)
+- Add a theme preview: hover any card and show a tooltip of the exact Tailwind class names used (for judges curious about the design system)
+
+Goal: A polished, accessible, production-ready app that's live and working.

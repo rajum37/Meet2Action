@@ -1,0 +1,32 @@
+Building the left input panel that accepts meeting notes or transcripts.
+
+TASK:
+1. Import shadcn/ui components: Button, Select, Textarea (if available; if not, use native HTML), Toast (for feedback).
+   Restyle each shadcn component to match the theme from Framework 1:
+   - Glass background: bg-white/[0.03], backdrop-blur-xl, border border-white/[0.1]
+   - On hover: border opacity increases to 0.3, add box-shadow glow-accent at 30% opacity, scale 1.01, -translate-y-0.5
+   - Button active state: scale 0.97
+   - Remove any default shadcn rounded corners; use the tailwind config values from Framework 1
+
+2. Create a component InputPanel.tsx that renders:
+   - Textarea (placeholder: "Paste your meeting notes or transcript here...") with onChange handler that stores text in a React state
+   - "Upload .txt" button that opens a file input, reads the file as text, appends it to the textarea
+   - A row of 3-4 "Try a sample meeting" chip buttons (styling: ghost style, monospace label, small text):
+     - "Sprint Planning" 
+     - "Customer Call"
+     - "Daily Standup"
+     Clicking a chip instantly fills the textarea with a sample transcript (see FRAMEWORK 5 seed data) and auto-selects the matching meeting_type
+   - Meeting type selector (shadcn Select or native <select>, restyle to match glass theme):
+     Options: Standup, Roadmap Review, Sprint Planning, Customer Call, Stakeholder Sync
+   - Generate button:
+     - Disabled (opacity-50, pointer-events-none) until input.length >= 20 AND meeting_type is selected
+     - Solid accent background, white text, glow on hover
+     - onClick stub for now (just logs "Generate clicked")
+
+3. Add inline validation/hints:
+   - If textarea is empty and Generate is disabled, show a small hint text below the Generate button: "Paste notes and select a meeting type to begin"
+   - If meeting_type is not selected, same hint
+
+4. Export InputPanel as a component ready to mount in the left sidebar.
+
+Goal: A fully interactive input panel with real state management, glass styling, and working sample chips (though they won't produce output yet).

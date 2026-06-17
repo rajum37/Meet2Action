@@ -1,0 +1,33 @@
+Building the action bar and history sidebar that let users capture and revisit their analyses.
+
+TASK:
+1. Create ActionBar.tsx component (sticky under the output header):
+   - Three buttons in a row: "Copy to Clipboard", "Export for Slack", "Export for Email"
+   - Each button: ghost style (transparent, accent text, accent border at 20%), glow on hover
+   - Each button onClick:
+     * "Copy to Clipboard": tries navigator.clipboard.writeText(formattedOutput), shows a toast on success ("Copied!") with a left accent border, auto-dismisses after 2.5s. On permission denied, falls back to a read-only textarea in a modal dialog for manual selection.
+     * "Export for Slack": formats output as monospace blocks and plain text suitable for Slack paste, copies to clipboard, shows "Copied for Slack" toast
+     * "Export for Email": wraps output in email-friendly HTML (no fancy glow, just readable text), copies as text, shows "Copied for Email" toast
+
+2. Create a device_id generator in hooks/useDeviceId.ts:
+   - On first load, generate crypto.randomUUID() and store in a first-party cookie (or localStorage if this isn't in an artifact context; for a real deployed app, use a cookie)
+   - Return the device_id so RLS policies can scope data to this device
+
+3. Create RecentAnalyses.tsx component:
+   - Query Supabase: SELECT id, title, meeting_type, created_at FROM meetings WHERE device_id = currentDeviceId ORDER BY created_at DESC LIMIT 10
+   - Render as a glass-styled list:
+     - Each row shows: meeting_type badge (monospace) + auto-title + relative timestamp + 1-line preview
+     - onClick a row: fetch that meeting's full analysis from Supabase and re-render it in the OutputWorkspace (no re-generation, just load from DB)
+   - Empty state: "No analyses yet. Generate your first meeting analysis above."
+   - On mobile (<768px): collapsible panel below the input
+
+4. When Generate completes successfully:
+   - Auto-save the meeting record + all related rows (summaries, decisions, action_items, risks_and_questions, next_steps) to Supabase using the device_id
+   - Generate a title: "{meetingType} • {timestamp}" or a smarter format like "Sprint Planning • Dec 17, 3:45 PM"
+   - Immediately add that new analysis to the top of the RecentAnalyses list (optimistic update, confirm once DB writes complete)
+
+5. Add trackEvent calls (stub for now, real analytics in Framework 7):
+   - trackEvent('copy_clicked', { format: 'clipboard' | 'slack' | 'email' })
+   - trackEvent('recent_analysis_opened', { meeting_id })
+
+Goal: Users can copy/export their output and see a persistent history of past analyses.

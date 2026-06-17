@@ -1,0 +1,41 @@
+Building the core generation logic that turns transcripts into structured output. This framework sets up BOTH the offline deterministic parser (default, instant) and the Edge Function skeleton (for live API mode).
+
+TASK:
+1. Create lib/parser.ts with a parseTranscript(input: string, meetingType: string) function that returns:
+   {
+     summary: string,
+     decisions: string[],
+     action_items: Array<{ description: string, owner_name: string }>,
+     risks: string[],
+     open_questions: string[],
+     next_steps: string[]
+   }
+
+   Logic (transparent, rule-based, debuggable):
+   - Split input by sentence (regex: split on /[.!?]+/)
+   - For each sentence:
+     * Decision: contains "we decided", "we agreed", "decided to", "agreed to" → push to decisions
+     * Action item: extract leading proper noun (e.g., "Priya will finish...") → owner_name = "Priya"; or if no name pattern, owner_name = "Unassigned"
+     * Risk: contains "risk:", "risk", "blocked", "blocker", "concern" → push to risks
+     * Open question: contains "open question:", starts with "do we", "should we", "would", or ends with "?" → push to open_questions
+     * Next step: contains "next step:" or sentence starts with "Next," → push to next_steps
+   - Summary: concatenate first 1-2 sentences, lightly cleaned
+   - Return the structured object
+
+   This is the real product logic for the demo. It will be overridden when a real API key is present (Framework 7).
+
+2. Create functions/supabase/generation.ts (or a Supabase Edge Function if you prefer):
+   - Stub for now: async function generateFromTranscript(transcript: string, meetingType: string)
+   - For MVP, call parseTranscript from lib/parser.ts
+   - Later (Framework 7), this will call the AI provider if an API key is present, falling back to parseTranscript if the API call fails
+   - Return the same structured object
+
+3. Create a generateMeeting() hook in hooks/useGenerate.ts:
+   - Accepts transcript, meetingType
+   - Returns { isLoading, data, error, progressSteps }
+   - progressSteps tracks which step is currently "active" (0-5): "Reading…", "Identifying…", "Mapping…", "Scanning…", "Drafting…"
+   - Each step lasts 400ms minimum (to give the UI time to animate in), then moves to the next
+   - Once all steps complete, returns the structured data
+   - Use framer-motion's AnimatePresence + transition for the progressive reveal
+
+Goal: A generation engine that works instantly (offline), has real step progression, and has a skeleton ready for live API integration.

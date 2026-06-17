@@ -1,0 +1,1 @@
+- [Meet2Action architecture](meet2action-arch.md) — dark glass React+Vite app with deterministic parser + OpenAI fallback; all DB via /api/*; Supabase is optional and degrades gracefully.

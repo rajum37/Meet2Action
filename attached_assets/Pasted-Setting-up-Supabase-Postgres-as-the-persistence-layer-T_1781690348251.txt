@@ -1,0 +1,114 @@
+Setting up Supabase (Postgres) as the persistence layer.
+
+TASK:
+1. Create a new Supabase project or use an existing one. Grab the SUPABASE_URL and SUPABASE_ANON_KEY.
+
+2. In the Supabase SQL editor, run the entire schema from below (copy/paste verbatim):
+
+CREATE TYPE meeting_type AS ENUM ('standup', 'roadmap_review', 'sprint_planning', 'customer_call', 'stakeholder_sync');
+
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name TEXT,
+  email TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE meetings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id),
+  device_id TEXT,
+  title TEXT,
+  meeting_type meeting_type NOT NULL,
+  raw_input TEXT NOT NULL,
+  status TEXT DEFAULT 'completed',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_meetings_user_created ON meetings (user_id, created_at DESC);
+CREATE INDEX idx_meetings_device_created ON meetings (device_id, created_at DESC);
+
+CREATE TABLE meeting_summaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id UUID NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  summary TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE UNIQUE INDEX idx_meeting_summaries_meeting ON meeting_summaries (meeting_id);
+
+CREATE TABLE decisions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id UUID NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_decisions_meeting ON decisions (meeting_id);
+
+CREATE TABLE action_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id UUID NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  owner_name TEXT DEFAULT 'Unassigned',
+  due_date DATE,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_action_items_meeting ON action_items (meeting_id);
+
+CREATE TYPE risk_item_type AS ENUM ('risk', 'open_question');
+CREATE TABLE risks_and_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id UUID NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  item_type risk_item_type NOT NULL,
+  description TEXT NOT NULL,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_risks_questions_meeting ON risks_and_questions (meeting_id);
+
+CREATE TABLE next_steps (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id UUID NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX idx_next_steps_meeting ON next_steps (meeting_id);
+
+3. Enable RLS on all user-data tables and create policies:
+
+ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own meetings" ON meetings FOR SELECT
+  USING (auth.uid() = user_id OR device_id = current_setting('request.device_id', true));
+CREATE POLICY "Users can insert own meetings" ON meetings FOR INSERT
+  WITH CHECK (auth.uid() = user_id OR device_id = current_setting('request.device_id', true));
+
+-- Apply identical SELECT/INSERT to meeting_summaries, decisions, action_items, risks_and_questions, next_steps
+ALTER TABLE meeting_summaries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own summaries" ON meeting_summaries FOR SELECT
+  USING (
+    EXISTS (SELECT 1 FROM meetings WHERE meetings.id = meeting_summaries.meeting_id 
+      AND (auth.uid() = meetings.user_id OR meetings.device_id = current_setting('request.device_id', true)))
+  );
+CREATE POLICY "Users can insert own summaries" ON meeting_summaries FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM meetings WHERE meetings.id = meeting_summaries.meeting_id 
+      AND (auth.uid() = meetings.user_id OR meetings.device_id = current_setting('request.device_id', true)))
+  );
+
+-- Repeat the pattern for decisions, action_items, risks_and_questions, next_steps
+
+4. Create a lib/supabase.ts file:
+   import { createClient } from '@supabase/supabase-js'
+   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+   export default supabase
+
+5. Add environment variables to .env.local:
+   VITE_SUPABASE_URL=your_url
+   VITE_SUPABASE_ANON_KEY=your_key
+
+6. Create a types/database.ts with TypeScript types for meetings, decisions, action_items, etc. (infer from the schema).
+
+Goal: A working Supabase instance with RLS policies ready to store meetings and analyses.

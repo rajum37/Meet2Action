@@ -1,0 +1,47 @@
+Building the right-column output area with progressive, animated reveal tied to the generation pipeline.
+
+TASK:
+1. Create OutputWorkspace.tsx component that receives:
+   - data: the structured object from Framework 4
+   - isLoading: boolean
+   - progressSteps: Array<{ step: number, label: string, complete: boolean }>
+
+2. Render a step indicator at the top (horizontal, monospace labels, accent color for active/complete):
+   Step 0: "Reading transcript…" → checkmark when complete
+   Step 1: "Identifying decisions…" → checkmark when complete
+   Step 2: "Mapping action items to owners…" → checkmark when complete
+   Step 3: "Scanning for risks & open questions…" → checkmark when complete
+   Step 4: "Drafting next steps…" → checkmark when complete
+
+   Use framer-motion to fade in each step label and animate checkmarks (Checkmark icon from lucide-react, scale 0 → 1).
+
+3. Render output cards in order, each with AnimatePresence + staggered fade-in + slide-up:
+   - Summary card (glass style from Framework 1):
+     - Title: "Summary" (monospace, small caps)
+     - Body text: data.summary
+     - Appears when step 0 completes
+
+   - Key Decisions card:
+     - Title: "Key Decisions"
+     - List of data.decisions, each as a clean row
+     - Appears when step 1 completes
+
+   - Action Items card (most important):
+     - Title: "Action Items"
+     - Each row: description + owner_name badge (monospace, small caps, accent-colored if owner is not "Unassigned", amber-tinted if "Unassigned")
+     - Appears when step 2 completes
+
+   - Risks & Open Questions card:
+     - Two sub-lists: risks (amber badges), open_questions (sky-colored badges)
+     - Appears when step 3 completes
+
+   - Suggested Next Steps card:
+     - Simple list, clean rows
+     - Appears when step 4 completes
+
+4. Use glass backgrounds (bg-white/[0.03], backdrop-blur-xl, border border-white/[0.1]) for all cards.
+   On card hover: border opacity increases, slight glow, scale 1.01, no layout shift.
+
+5. If isLoading, show skeleton loaders in place of cards (subtle pulsing glass boxes, same height as real content).
+
+Goal: A beautiful, animated output workspace that reveals progressively as the generation engine runs, with proper timing so it doesn't feel rushed.
