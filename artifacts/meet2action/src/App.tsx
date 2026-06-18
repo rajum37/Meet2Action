@@ -184,6 +184,15 @@ export default function App() {
           saveProfile(p);
           setView("main");
           trackEvent("onboarding_complete", { anonymous: p.isAnonymous });
+          pendo.identify({
+            visitor: {
+              id: deviceId,
+              email: p.email || undefined,
+              full_name: p.name || undefined,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+          });
         }}
       />
     );
