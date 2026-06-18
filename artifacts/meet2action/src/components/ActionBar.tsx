@@ -1,13 +1,26 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Slack, Mail, X } from "lucide-react";
+import { Copy, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ParsedMeeting } from "@/lib/generation";
 import { trackEvent } from "@/lib/analytics";
 
 // ── Formatters ────────────────────────────────────────────────────────────
 
-function formatClipboard(data: ParsedMeeting): string {
+function formatSummary(data: ParsedMeeting): string {
+  return `MEETING SUMMARY\n═══════════════\n${data.summary}`;
+}
+
+function formatActionItems(data: ParsedMeeting): string {
+  if (!data.action_items.length) return "No action items found.";
+  const lines: string[] = ["ACTION ITEMS & OWNERS", "─────────────────────"];
+  data.action_items.forEach((a) =>
+    lines.push(`• ${a.description}  [${a.owner_name}]`)
+  );
+  return lines.join("\n");
+}
+
+function formatFullReport(data: ParsedMeeting): string {
   const lines: string[] = [];
   lines.push("MEETING SUMMARY", "═══════════════", data.summary, "");
   if (data.decisions.length) {
@@ -39,67 +52,7 @@ function formatClipboard(data: ParsedMeeting): string {
   return lines.join("\n").trim();
 }
 
-function formatSlack(data: ParsedMeeting): string {
-  const lines: string[] = [];
-  lines.push(`*📋 Summary*\n${data.summary}`);
-  if (data.decisions.length) {
-    lines.push(`\n*✅ Key Decisions*`);
-    data.decisions.forEach((d) => lines.push(`• ${d}`));
-  }
-  if (data.action_items.length) {
-    lines.push(`\n*⚡ Action Items*`);
-    data.action_items.forEach((a) =>
-      lines.push(`• \`${a.owner_name}\` – ${a.description}`)
-    );
-  }
-  if (data.risks.length) {
-    lines.push(`\n*🚧 Risks & Blockers*`);
-    data.risks.forEach((r) => lines.push(`• ${r}`));
-  }
-  if (data.open_questions.length) {
-    lines.push(`\n*❓ Open Questions*`);
-    data.open_questions.forEach((q) => lines.push(`• ${q}`));
-  }
-  if (data.next_steps.length) {
-    lines.push(`\n*➡️ Next Steps*`);
-    data.next_steps.forEach((n) => lines.push(`• ${n}`));
-  }
-  return lines.join("\n").trim();
-}
-
-function formatEmail(data: ParsedMeeting): string {
-  const lines: string[] = [];
-  lines.push("Meeting Summary", "", data.summary, "");
-  if (data.decisions.length) {
-    lines.push("Key Decisions", "");
-    data.decisions.forEach((d) => lines.push(`- ${d}`));
-    lines.push("");
-  }
-  if (data.action_items.length) {
-    lines.push("Action Items", "");
-    data.action_items.forEach((a) =>
-      lines.push(`- ${a.description} (Owner: ${a.owner_name})`)
-    );
-    lines.push("");
-  }
-  if (data.risks.length) {
-    lines.push("Risks & Blockers", "");
-    data.risks.forEach((r) => lines.push(`- ${r}`));
-    lines.push("");
-  }
-  if (data.open_questions.length) {
-    lines.push("Open Questions", "");
-    data.open_questions.forEach((q) => lines.push(`- ${q}`));
-    lines.push("");
-  }
-  if (data.next_steps.length) {
-    lines.push("Next Steps", "");
-    data.next_steps.forEach((n) => lines.push(`- ${n}`));
-  }
-  return lines.join("\n").trim();
-}
-
-// ── Toast helper ──────────────────────────────────────────────────────────
+// ── Toast style ────────────────────────────────────────────────────────────
 
 const toastStyle = {
   background: "#0D0D0E",
@@ -109,6 +62,8 @@ const toastStyle = {
   fontFamily: "monospace",
   fontSize: "13px",
 };
+
+const COPY_MSG = "Copied! Paste into Slack, email, or docs.";
 
 // ── Fallback modal ────────────────────────────────────────────────────────
 
@@ -168,17 +123,15 @@ function FallbackModal({ text, onClose }: { text: string; onClose: () => void })
   );
 }
 
-// ── Button ────────────────────────────────────────────────────────────────
+// ── Copy button ────────────────────────────────────────────────────────────
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#050505]";
 
-function ExportButton({
-  icon,
+function CopyButton({
   label,
   onClick,
 }: {
-  icon: React.ReactNode;
   label: string;
   onClick: () => void;
 }) {
@@ -196,7 +149,7 @@ function ExportButton({
         focusRing,
       ].join(" ")}
     >
-      {icon}
+      <Copy className="w-3 h-3" />
       {label}
     </motion.button>
   );
@@ -207,36 +160,31 @@ function ExportButton({
 export default function ActionBar({ data }: { data: ParsedMeeting }) {
   const [fallbackText, setFallbackText] = useState<string | null>(null);
 
-  const copyText = async (text: string, msg: string) => {
+  const copyText = async (text: string, trackKey: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success(msg, { duration: 2500, style: toastStyle });
+      toast.success(COPY_MSG, { duration: 2500, style: toastStyle });
+      trackEvent(trackKey as Parameters<typeof trackEvent>[0]);
     } catch {
       setFallbackText(text);
     }
   };
 
-  const handleClipboard = () => {
-    trackEvent("copy_clicked");
-    copyText(formatClipboard(data), "Copied to clipboard!");
-  };
-
-  const handleSlack = () => {
-    trackEvent("export_slack_clicked");
-    copyText(formatSlack(data), "Copied for Slack!");
-  };
-
-  const handleEmail = () => {
-    trackEvent("export_email_clicked");
-    copyText(formatEmail(data), "Copied for Email!");
-  };
-
   return (
     <>
       <div className="flex items-center gap-2 px-5 py-2.5 border-b border-white/[0.06] bg-white/[0.01] flex-wrap">
-        <ExportButton icon={<Copy className="w-3 h-3" />} label="Copy" onClick={handleClipboard} />
-        <ExportButton icon={<Slack className="w-3 h-3" />} label="Slack" onClick={handleSlack} />
-        <ExportButton icon={<Mail className="w-3 h-3" />} label="Email" onClick={handleEmail} />
+        <CopyButton
+          label="Copy summary"
+          onClick={() => copyText(formatSummary(data), "copy_clicked")}
+        />
+        <CopyButton
+          label="Copy action items"
+          onClick={() => copyText(formatActionItems(data), "copy_clicked")}
+        />
+        <CopyButton
+          label="Copy full report"
+          onClick={() => copyText(formatFullReport(data), "copy_clicked")}
+        />
       </div>
 
       <AnimatePresence>

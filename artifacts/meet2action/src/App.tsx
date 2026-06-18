@@ -84,6 +84,7 @@ export default function App() {
   );
 
   const [inputState, setInputState] = useState<InputPanelState>({
+    title: "",
     text: "",
     meetingType: "",
   });
@@ -112,7 +113,7 @@ export default function App() {
     if (!generatedData || generatedData === savedDataRef.current) return;
     savedDataRef.current = generatedData;
 
-    const title = makeTitle(inputState.meetingType);
+    const title = inputState.title.trim() || makeTitle(inputState.meetingType);
     const pending: MeetingListItem = {
       id: `pending-${Date.now()}`,
       title,

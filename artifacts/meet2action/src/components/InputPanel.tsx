@@ -19,6 +19,7 @@ export type MeetingType =
   | "";
 
 export interface InputPanelState {
+  title: string;
   text: string;
   meetingType: MeetingType;
 }
@@ -147,6 +148,12 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
 
   const isReady = value.text.trim().length >= 20 && value.meetingType !== "";
 
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ ...value, title: e.target.value }),
+    [value, onChange]
+  );
+
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) =>
       onChange({ ...value, text: e.target.value }),
@@ -178,9 +185,9 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       const sample = SAMPLES[label];
       if (!sample) return;
       trackEvent("demo_chip_clicked", { sample: label, meeting_type: sample.meetingType });
-      onChange({ text: sample.transcript, meetingType: sample.meetingType });
+      onChange({ ...value, text: sample.transcript, meetingType: sample.meetingType });
     },
-    [onChange]
+    [value, onChange]
   );
 
   const handleUseSample = useCallback(() => {
@@ -209,57 +216,58 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="tracking-mono text-[#8A8A85]">Input</p>
 
-      {/* Sample chips */}
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Sample transcripts">
-        {Object.keys(SAMPLES).map((label) => (
-          <motion.button
-            key={label}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleSampleChip(label)}
-            className={[
-              "px-2.5 py-1 rounded-lg text-[11px] font-mono tracking-wide uppercase",
-              "border border-white/[0.10] text-[#8A8A85]",
-              "hover:border-[#A6FF4D]/30 hover:text-[#A6FF4D] hover:bg-[#A6FF4D]/5",
-              "active:scale-95 transition-all duration-150",
-              focusRing,
-            ].join(" ")}
-          >
-            {label}
-          </motion.button>
-        ))}
+      {/* Meeting title */}
+      <div className="flex flex-col gap-1.5">
+        <p className="tracking-mono text-[#8A8A85] text-xs uppercase font-mono">Meeting title</p>
+        <input
+          type="text"
+          aria-label="Meeting title"
+          placeholder="e.g. Sprint 24 Planning"
+          value={value.title}
+          onChange={handleTitleChange}
+          className={[
+            "w-full h-9 px-3 rounded-lg text-sm font-mono text-[#F5F5F0]",
+            "bg-white/[0.03] backdrop-blur-xl border border-white/[0.1]",
+            "placeholder:text-[#8A8A85]/50",
+            "focus:outline-none focus:border-white/[0.30] focus:shadow-[0_0_24px_rgba(166,255,77,0.1)]",
+            "transition-all duration-200",
+          ].join(" ")}
+        />
       </div>
 
-      {/* Textarea */}
-      <div
-        className={[
-          "relative rounded-xl overflow-hidden",
-          glassBase,
-          "focus-within:border-white/[0.30] focus-within:shadow-[0_0_40px_rgba(166,255,77,0.12)]",
-        ].join(" ")}
-      >
-        <textarea
-          aria-label="Meeting transcript"
-          className="w-full h-40 md:h-48 bg-transparent text-sm text-[#F5F5F0] placeholder:text-[#8A8A85]/50 px-4 py-3 resize-none focus:outline-none font-mono leading-relaxed"
-          placeholder="Paste your meeting notes or transcript here..."
-          value={value.text}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-        />
-        <AnimatePresence>
-          {charCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute bottom-2 right-3 tracking-mono text-[#8A8A85]/50 pointer-events-none"
-              style={{ fontSize: "10px" }}
-            >
-              {charCount.toLocaleString()} chars
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Transcript textarea */}
+      <div className="flex flex-col gap-1.5">
+        <p className="tracking-mono text-[#8A8A85] text-xs uppercase font-mono">Transcript</p>
+        <div
+          className={[
+            "relative rounded-xl overflow-hidden",
+            glassBase,
+            "focus-within:border-white/[0.30] focus-within:shadow-[0_0_40px_rgba(166,255,77,0.12)]",
+          ].join(" ")}
+        >
+          <textarea
+            aria-label="Meeting transcript"
+            className="w-full h-40 md:h-48 bg-transparent text-sm text-[#F5F5F0] placeholder:text-[#8A8A85]/50 px-4 py-3 resize-none focus:outline-none font-mono leading-relaxed"
+            placeholder="Paste your meeting notes or transcript here..."
+            value={value.text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+          />
+          <AnimatePresence>
+            {charCount > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute bottom-2 right-3 tracking-mono text-[#8A8A85]/50 pointer-events-none"
+                style={{ fontSize: "10px" }}
+              >
+                {charCount.toLocaleString()} chars
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Use sample meeting */}
@@ -304,7 +312,7 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
 
       {/* Meeting type */}
       <div className="flex flex-col gap-1.5">
-        <p className="tracking-mono text-[#8A8A85]">Meeting type</p>
+        <p className="tracking-mono text-[#8A8A85] text-xs uppercase font-mono">Meeting type</p>
         <Select
           key={value.meetingType || "__empty__"}
           defaultValue={value.meetingType || undefined}
