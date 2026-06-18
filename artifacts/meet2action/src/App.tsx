@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import InputPanel, { type InputPanelState } from "@/components/InputPanel";
 import OutputWorkspace from "@/components/OutputWorkspace";
-import RecentAnalyses from "@/components/RecentAnalyses";
 import LandingPage from "@/components/LandingPage";
 import ProfileSetup from "@/components/ProfileSetup";
 import PastMeetings from "@/components/PastMeetings";
@@ -252,12 +251,6 @@ export default function App() {
               <span className="font-mono text-xs tracking-wide uppercase">Past meetings</span>
             </button>
 
-            <RecentAnalyses
-              deviceId={deviceId}
-              refreshKey={refreshKey}
-              pendingItem={pendingItem}
-              onSelect={handleSelectAnalysis}
-            />
           </div>
         </aside>
 
