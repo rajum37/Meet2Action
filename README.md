@@ -58,7 +58,7 @@ Typical use cases:
 **Frontend**
 
 - React + TypeScript
-- Tailwind CSS (or utility‑first styling in the Replit app)
+- Tailwind CSS
 - Simple card‑based dashboard layout inspired by Novus
 
 **Backend**
