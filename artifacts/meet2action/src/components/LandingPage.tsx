@@ -5,7 +5,7 @@ const STEPS = [
   {
     icon: FileText,
     title: "Paste your transcript",
-    desc: "Drop in raw meeting notes, audio transcript, or quick bullet points — any format works.",
+    desc: "Drop in raw meeting notes, transcripts, or quick bullet points — just paste the text and we'll do the rest.",
   },
   {
     icon: Tag,
