@@ -151,7 +151,7 @@ root
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/<your-username>/meet2action.git
+git clone https://github.com/rajum37/meet2action.git
 cd meet2action
 
 # 2. Install dependencies
@@ -237,7 +237,6 @@ After the hackathon, we want to:
 
 ---
 
-## 🔗 Try it out
 
 - **Live app:** [https://meet-2-action--rajumokara7.replit.app](https://meet-2-action--rajumokara7.replit.app)  
 - **GitHub repo:** [https://github.com/rajum37/meet2action](https://github.com/rajum37/meet2action)
