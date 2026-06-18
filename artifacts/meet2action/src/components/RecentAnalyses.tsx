@@ -65,7 +65,7 @@ export default function RecentAnalyses({
 
   const handleSelect = async (item: MeetingListItem) => {
     setLoadingId(item.id);
-    trackEvent("recent_analysis_opened", { meeting_id: item.id });
+    trackEvent("recent_analysis_opened", { meeting_id: item.id, meeting_type: item.meeting_type });
     const analysis = await getMeetingAnalysis(item.id, deviceId);
     setLoadingId(null);
     if (!analysis) {

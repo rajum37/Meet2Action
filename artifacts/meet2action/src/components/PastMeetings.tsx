@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Search, Star, ChevronLeft, Loader2, AlertTriangle,
@@ -130,6 +130,10 @@ function DetailView({
   const handleDelete = useCallback(async () => {
     setIsDeleting(true);
     await deleteMeeting(item.id, deviceId);
+    trackEvent("meeting_deleted", {
+      meeting_id: item.id,
+      meeting_type: item.meeting_type,
+    });
     onDeleted(item.id);
   }, [item.id, deviceId, onDeleted]);
 
@@ -338,9 +342,17 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
   const handleFavoriteToggle = useCallback((e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     toggleFavorite(id);
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, favorite: !item.favorite } : item))
-    );
+    setItems((prev) => {
+      const updated = prev.map((item) => (item.id === id ? { ...item, favorite: !item.favorite } : item));
+      const toggled = updated.find((item) => item.id === id);
+      if (toggled) {
+        trackEvent("meeting_favorited", {
+          meeting_id: id,
+          is_favorite: !!toggled.favorite,
+        });
+      }
+      return updated;
+    });
   }, []);
 
   const handleDeleteClick = useCallback((e: React.MouseEvent, item: MeetingListItem) => {
@@ -352,6 +364,10 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
     if (!deleteConfirmItem) return;
     setIsDeleting(true);
     await deleteMeeting(deleteConfirmItem.id, deviceId);
+    trackEvent("meeting_deleted", {
+      meeting_id: deleteConfirmItem.id,
+      meeting_type: deleteConfirmItem.meeting_type,
+    });
     setItems((prev) => prev.filter((m) => m.id !== deleteConfirmItem.id));
     setDeleteConfirmItem(null);
     setIsDeleting(false);
@@ -377,6 +393,27 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
     });
   }, [items, query, dateFilter, typeFilter, favoritesOnly]);
 
+  // Debounced tracking for filter/search changes
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      trackEvent("meeting_search_executed", {
+        query_length: query.length,
+        date_filter: dateFilter,
+        type_filter: typeFilter || "all",
+        favorites_only: favoritesOnly,
+        results_count: filtered.length,
+        total_meetings_count: items.length,
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, dateFilter, typeFilter, favoritesOnly]);
+
   const handleSelectItem = useCallback(
     async (item: MeetingListItem) => {
       setSelectedItem(item);
@@ -391,7 +428,7 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
       if (analysis) {
         onSelect(analysis);
         onClose();
-        trackEvent("past_meeting_loaded", { meeting_id: item.id });
+        trackEvent("past_meeting_loaded", { meeting_id: item.id, meeting_type: item.meeting_type });
       }
     },
     [deviceId, onSelect, onClose]
@@ -427,7 +464,7 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
             onLoad={(analysis) => {
               onSelect(analysis);
               onClose();
-              trackEvent("past_meeting_loaded", { meeting_id: selectedItem.id });
+              trackEvent("past_meeting_loaded", { meeting_id: selectedItem.id, meeting_type: selectedItem.meeting_type });
             }}
           />
         ) : (

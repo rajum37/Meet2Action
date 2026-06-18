@@ -124,7 +124,15 @@ export default function App() {
       summary: generatedData.summary,
     };
     setPendingItem(pending);
-    trackEvent("generate_completed", { meeting_type: inputState.meetingType });
+    trackEvent("generate_completed", {
+      meeting_type: inputState.meetingType,
+      action_items_count: generatedData.action_items.length,
+      decisions_count: generatedData.decisions.length,
+      risks_count: generatedData.risks.length,
+      open_questions_count: generatedData.open_questions.length,
+      next_steps_count: generatedData.next_steps.length,
+      summary_length: generatedData.summary.length,
+    });
 
     saveMeeting({
       device_id: deviceId,
@@ -137,7 +145,11 @@ export default function App() {
       setPendingItem(null);
       if (id) {
         setRefreshKey((k) => k + 1);
-        trackEvent("save_completed");
+        trackEvent("save_completed", {
+          meeting_id: id,
+          meeting_type: inputState.meetingType,
+          input_source: inputState.inputSource,
+        });
       }
     });
   }, [generatedData, deviceId, inputState.meetingType, inputState.text]);
@@ -149,7 +161,12 @@ export default function App() {
   const handleGenerate = useCallback(() => {
     if (!inputState.text.trim() || !inputState.meetingType) return;
     setOverrideData(null);
-    trackEvent("generate_started", { meeting_type: inputState.meetingType });
+    trackEvent("generate_started", {
+      meeting_type: inputState.meetingType,
+      input_source: inputState.inputSource,
+      transcript_length: inputState.text.length,
+      has_custom_meeting_type: !!inputState.customMeetingType,
+    });
     generate(inputState.text, inputState.meetingType, inputState.customMeetingType || undefined);
   }, [inputState, generate]);
 
@@ -183,7 +200,11 @@ export default function App() {
         onComplete={(p) => {
           saveProfile(p);
           setView("main");
-          trackEvent("onboarding_complete", { anonymous: p.isAnonymous });
+          trackEvent("onboarding_complete", {
+            anonymous: p.isAnonymous,
+            has_name: !!p.name,
+            has_email: !!p.email,
+          });
         }}
       />
     );

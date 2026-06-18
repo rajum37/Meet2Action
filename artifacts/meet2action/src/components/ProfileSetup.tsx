@@ -17,7 +17,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
 
   const handleSave = () => {
     const profile: Profile = { name: name.trim(), email: email.trim(), avatar, isAnonymous: false };
-    trackEvent("profile_saved", { has_name: !!name.trim(), has_email: !!email.trim() });
+    trackEvent("profile_saved", { has_name: !!name.trim(), has_email: !!email.trim(), avatar });
     onComplete(profile);
   };
 

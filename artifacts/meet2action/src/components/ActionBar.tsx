@@ -160,11 +160,14 @@ function CopyButton({
 export default function ActionBar({ data }: { data: ParsedMeeting }) {
   const [fallbackText, setFallbackText] = useState<string | null>(null);
 
-  const copyText = async (text: string, trackKey: string) => {
+  const copyText = async (text: string, copyType: string) => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success(COPY_MSG, { duration: 2500, style: toastStyle });
-      trackEvent(trackKey as Parameters<typeof trackEvent>[0]);
+      trackEvent("copy_clicked", {
+        copy_type: copyType,
+        content_length: text.length,
+      });
     } catch {
       setFallbackText(text);
     }
@@ -175,15 +178,15 @@ export default function ActionBar({ data }: { data: ParsedMeeting }) {
       <div className="flex items-center gap-2 px-5 py-2.5 border-b border-white/[0.06] bg-white/[0.01] flex-wrap">
         <CopyButton
           label="Copy summary"
-          onClick={() => copyText(formatSummary(data), "copy_clicked")}
+          onClick={() => copyText(formatSummary(data), "summary")}
         />
         <CopyButton
           label="Copy action items"
-          onClick={() => copyText(formatActionItems(data), "copy_clicked")}
+          onClick={() => copyText(formatActionItems(data), "action_items")}
         />
         <CopyButton
           label="Copy full report"
-          onClick={() => copyText(formatFullReport(data), "copy_clicked")}
+          onClick={() => copyText(formatFullReport(data), "full_report")}
         />
       </div>
 
