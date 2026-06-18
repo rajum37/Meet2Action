@@ -6,6 +6,7 @@ export interface MeetingListItem {
   meeting_type: string;
   created_at: string;
   summary: string;
+  favorite?: boolean;
 }
 
 export interface SaveMeetingPayload {
@@ -18,6 +19,7 @@ export interface SaveMeetingPayload {
 
 interface HistoryEntry extends MeetingListItem {
   analysis: ParsedMeeting;
+  favorite: boolean;
 }
 
 const HISTORY_KEY = "m2a_history";
@@ -35,9 +37,7 @@ function loadHistory(): HistoryEntry[] {
 function saveHistory(entries: HistoryEntry[]): void {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, MAX_HISTORY)));
-  } catch {
-    // storage quota exceeded or unavailable — silently ignore
-  }
+  } catch {}
 }
 
 export async function saveMeeting(
@@ -51,21 +51,19 @@ export async function saveMeeting(
     created_at: new Date().toISOString(),
     summary: payload.analysis.summary ?? "",
     analysis: payload.analysis,
+    favorite: false,
   };
 
   const history = loadHistory();
   saveHistory([entry, ...history]);
 
-  // Best-effort cloud sync — failure is silently ignored
   try {
     await fetch("/api/meetings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...payload, id }),
     });
-  } catch {
-    // no-op
-  }
+  } catch {}
 
   return id;
 }
@@ -73,7 +71,6 @@ export async function saveMeeting(
 export async function listMeetings(
   deviceId: string
 ): Promise<MeetingListItem[] | null> {
-  // Try API first (Supabase-backed)
   try {
     const res = await fetch(
       `/api/meetings?device_id=${encodeURIComponent(deviceId)}`
@@ -84,18 +81,16 @@ export async function listMeetings(
         return body.meetings;
       }
     }
-  } catch {
-    // fall through to localStorage
-  }
+  } catch {}
 
-  // Fall back to localStorage
   const history = loadHistory();
-  return history.map(({ id, title, meeting_type, created_at, summary }) => ({
+  return history.map(({ id, title, meeting_type, created_at, summary, favorite }) => ({
     id,
     title,
     meeting_type,
     created_at,
     summary,
+    favorite,
   }));
 }
 
@@ -103,7 +98,6 @@ export async function getMeetingAnalysis(
   id: string,
   deviceId: string
 ): Promise<ParsedMeeting | null> {
-  // Try API first
   try {
     const res = await fetch(
       `/api/meetings/${id}?device_id=${encodeURIComponent(deviceId)}`
@@ -112,12 +106,24 @@ export async function getMeetingAnalysis(
       const body = (await res.json()) as { analysis: ParsedMeeting };
       if (body.analysis) return body.analysis;
     }
-  } catch {
-    // fall through
-  }
+  } catch {}
 
-  // Fall back to localStorage
   const history = loadHistory();
   const entry = history.find((e) => e.id === id);
   return entry?.analysis ?? null;
+}
+
+export function toggleFavorite(id: string): boolean {
+  const history = loadHistory();
+  const updated = history.map((e) =>
+    e.id === id ? { ...e, favorite: !e.favorite } : e
+  );
+  saveHistory(updated);
+  const entry = updated.find((e) => e.id === id);
+  return entry?.favorite ?? false;
+}
+
+export function deleteMeeting(id: string): void {
+  const history = loadHistory();
+  saveHistory(history.filter((e) => e.id !== id));
 }

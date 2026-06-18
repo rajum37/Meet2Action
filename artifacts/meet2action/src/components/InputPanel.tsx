@@ -1,6 +1,6 @@
 import { useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Zap, ChevronRight, FileText } from "lucide-react";
+import { Upload, Zap, ChevronRight, FileText, Sparkles } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,8 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { trackEvent } from "@/lib/analytics";
-
-// ── Types ──────────────────────────────────────────────────────────────────
 
 export type MeetingType =
   | "standup"
@@ -30,8 +28,6 @@ interface InputPanelProps {
   onChange: (next: InputPanelState) => void;
   onGenerate: () => void;
 }
-
-// ── Sample transcripts ─────────────────────────────────────────────────────
 
 const SAMPLES: Record<string, { meetingType: MeetingType; transcript: string }> = {
   "Sprint Planning": {
@@ -137,8 +133,6 @@ const MEETING_TYPE_OPTIONS: { value: MeetingType; label: string }[] = [
   { value: "stakeholder_sync", label: "Stakeholder Sync" },
 ];
 
-// ── Shared helpers ─────────────────────────────────────────────────────────
-
 const glassBase =
   "bg-white/[0.03] backdrop-blur-xl border border-white/[0.1] transition-all duration-200 ease-out";
 
@@ -147,8 +141,6 @@ const glassHover =
 
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#050505]";
-
-// ── Component ──────────────────────────────────────────────────────────────
 
 export default function InputPanel({ value, onChange, onGenerate }: InputPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -190,6 +182,13 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
     },
     [onChange]
   );
+
+  const handleUseSample = useCallback(() => {
+    const keys = Object.keys(SAMPLES);
+    const random = keys[Math.floor(Math.random() * keys.length)];
+    handleSampleChip(random);
+    trackEvent("use_sample_clicked");
+  }, [handleSampleChip]);
 
   const handleGenerate = useCallback(() => {
     if (!isReady) return;
@@ -262,6 +261,22 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
           )}
         </AnimatePresence>
       </div>
+
+      {/* Use sample meeting */}
+      <motion.button
+        whileTap={{ scale: 0.97 }}
+        onClick={handleUseSample}
+        className={[
+          "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm text-[#8A8A85]",
+          glassBase,
+          "hover:border-[#A6FF4D]/20 hover:text-[#A6FF4D] hover:bg-[#A6FF4D]/[0.03]",
+          "active:scale-[0.97]",
+          focusRing,
+        ].join(" ")}
+      >
+        <Sparkles className="w-3.5 h-3.5" />
+        <span className="font-mono text-xs tracking-wide uppercase">Use sample meeting</span>
+      </motion.button>
 
       {/* Upload .txt */}
       <input
@@ -369,10 +384,6 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
             </motion.p>
           )}
         </AnimatePresence>
-
-        <p className="text-center tracking-mono text-[#8A8A85]/30" style={{ fontSize: "9px" }}>
-          Ctrl+Enter to generate
-        </p>
       </div>
     </div>
   );
