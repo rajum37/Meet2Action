@@ -18,6 +18,8 @@ Product Managers and team leads run back‑to‑back meetings, but their notes o
 - Weekly updates require re-reading raw notes.
 
 Most “AI meeting tools” stop at generic summaries. They don’t give a structured, execution‑ready view that PMs can immediately paste into Slack, email, or tickets.
+(./problem.png)
+
 
 ---
 
