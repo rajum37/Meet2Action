@@ -123,7 +123,12 @@ export function toggleFavorite(id: string): boolean {
   return entry?.favorite ?? false;
 }
 
-export function deleteMeeting(id: string): void {
+export async function deleteMeeting(id: string, deviceId: string): Promise<void> {
   const history = loadHistory();
   saveHistory(history.filter((e) => e.id !== id));
+  try {
+    await fetch(`/api/meetings/${id}?device_id=${encodeURIComponent(deviceId)}`, {
+      method: "DELETE",
+    });
+  } catch {}
 }

@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Search, Star, ChevronLeft, Loader2, AlertTriangle,
-  Users, CheckSquare, AlertCircle, HelpCircle, ArrowRight, Calendar
+  Users, CheckSquare, AlertCircle, HelpCircle, ArrowRight, Calendar, Trash2
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isThisWeek, isThisMonth, parseISO } from "date-fns";
-import { listMeetings, getMeetingAnalysis, toggleFavorite, type MeetingListItem } from "@/lib/api";
+import { listMeetings, getMeetingAnalysis, toggleFavorite, deleteMeeting, type MeetingListItem } from "@/lib/api";
 import type { ParsedMeeting } from "@/lib/generation";
 import { trackEvent } from "@/lib/analytics";
 
@@ -46,19 +46,71 @@ function matchesDate(createdAt: string, filter: DateFilter): boolean {
   return true;
 }
 
+function DeleteConfirmDialog({
+  onCancel,
+  onConfirm,
+  isDeleting,
+}: {
+  onCancel: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
+      <motion.div
+        className="relative w-full max-w-sm rounded-2xl p-6 flex flex-col gap-4 shadow-2xl"
+        style={{ background: "#141415", border: "1px solid rgba(255,255,255,0.10)" }}
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.15 }}
+      >
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-base font-semibold text-[#F5F5F0]">Delete this meeting?</h2>
+          <p className="text-sm text-[#8A8A85] leading-relaxed">
+            This will remove the meeting and its analysis from your history. This action cannot be undone.
+          </p>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[#8A8A85] hover:text-[#F5F5F0] hover:bg-white/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-red-500/90 hover:bg-red-500 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            Delete meeting
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function DetailView({
   item,
   deviceId,
   onBack,
   onLoad,
+  onDeleted,
 }: {
   item: MeetingListItem;
   deviceId: string;
   onBack: () => void;
   onLoad: (analysis: ParsedMeeting) => void;
+  onDeleted: (id: string) => void;
 }) {
   const [analysis, setAnalysis] = useState<ParsedMeeting | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -67,6 +119,12 @@ function DetailView({
       setLoading(false);
     });
   }, [item.id, deviceId]);
+
+  const handleDelete = useCallback(async () => {
+    setIsDeleting(true);
+    await deleteMeeting(item.id, deviceId);
+    onDeleted(item.id);
+  }, [item.id, deviceId, onDeleted]);
 
   const typeLabel = MEETING_TYPE_LABELS[item.meeting_type] ?? item.meeting_type;
   const relTime = item.created_at
@@ -99,7 +157,23 @@ function DetailView({
           </div>
           <p className="text-sm font-semibold text-[#F5F5F0] truncate">{item.title}</p>
         </div>
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="flex-shrink-0 p-1.5 rounded-lg text-[#8A8A85]/50 hover:text-red-400 hover:bg-red-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
+          aria-label="Delete meeting"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       </div>
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <DeleteConfirmDialog
+            onCancel={() => setShowDeleteConfirm(false)}
+            onConfirm={handleDelete}
+            isDeleting={isDeleting}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
         {loading ? (
@@ -239,6 +313,8 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
   const [typeFilter, setTypeFilter] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MeetingListItem | null>(null);
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState<MeetingListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -258,6 +334,25 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, favorite: !item.favorite } : item))
     );
+  }, []);
+
+  const handleDeleteClick = useCallback((e: React.MouseEvent, item: MeetingListItem) => {
+    e.stopPropagation();
+    setDeleteConfirmItem(item);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteConfirmItem) return;
+    setIsDeleting(true);
+    await deleteMeeting(deleteConfirmItem.id, deviceId);
+    setItems((prev) => prev.filter((m) => m.id !== deleteConfirmItem.id));
+    setDeleteConfirmItem(null);
+    setIsDeleting(false);
+  }, [deleteConfirmItem, deviceId]);
+
+  const handleDeletedFromDetail = useCallback((id: string) => {
+    setItems((prev) => prev.filter((m) => m.id !== id));
+    setSelectedItem(null);
   }, []);
 
   const filtered = useMemo(() => {
@@ -321,6 +416,7 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
             item={selectedItem}
             deviceId={deviceId}
             onBack={() => setSelectedItem(null)}
+            onDeleted={handleDeletedFromDetail}
             onLoad={(analysis) => {
               onSelect(analysis);
               onClose();
@@ -468,20 +564,29 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
                                 </span>
                                 <span className="text-[10px] font-mono text-[#8A8A85]/50">{relTime}</span>
                               </div>
-                              <button
-                                onClick={(e) => handleFavoriteToggle(e, item.id)}
-                                className="flex-shrink-0 p-1 rounded transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/50"
-                                aria-label={item.favorite ? "Remove from favourites" : "Add to favourites"}
-                                aria-pressed={!!item.favorite}
-                              >
-                                <Star
-                                  className="w-3.5 h-3.5 transition-colors"
-                                  style={{
-                                    color: item.favorite ? "#facc15" : "rgba(138,138,133,0.4)",
-                                    fill: item.favorite ? "#facc15" : "none",
-                                  }}
-                                />
-                              </button>
+                              <div className="flex items-center gap-0.5 flex-shrink-0">
+                                <button
+                                  onClick={(e) => handleFavoriteToggle(e, item.id)}
+                                  className="p-1 rounded transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-yellow-400/50"
+                                  aria-label={item.favorite ? "Remove from favourites" : "Add to favourites"}
+                                  aria-pressed={!!item.favorite}
+                                >
+                                  <Star
+                                    className="w-3.5 h-3.5 transition-colors"
+                                    style={{
+                                      color: item.favorite ? "#facc15" : "rgba(138,138,133,0.4)",
+                                      fill: item.favorite ? "#facc15" : "none",
+                                    }}
+                                  />
+                                </button>
+                                <button
+                                  onClick={(e) => handleDeleteClick(e, item)}
+                                  className="p-1 rounded transition-colors text-[#8A8A85]/40 hover:text-red-400 hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/40"
+                                  aria-label="Delete meeting"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                             <p className="text-xs font-semibold text-[#F5F5F0]/90 mb-1 line-clamp-1">
                               {item.title}
@@ -502,6 +607,15 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
           </>
         )}
       </motion.div>
+      <AnimatePresence>
+        {deleteConfirmItem && (
+          <DeleteConfirmDialog
+            onCancel={() => setDeleteConfirmItem(null)}
+            onConfirm={handleDeleteConfirm}
+            isDeleting={isDeleting}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

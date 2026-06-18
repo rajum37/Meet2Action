@@ -198,4 +198,38 @@ router.get("/meetings/:id", async (req, res) => {
   });
 });
 
+router.delete("/meetings/:id", async (req, res) => {
+  const { id } = req.params;
+  const deviceId = req.query["device_id"] as string | undefined;
+
+  if (!supabaseAdmin || !deviceId || !id) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const { data: meeting } = await supabaseAdmin
+    .from("meetings")
+    .select("id")
+    .eq("id", id)
+    .eq("device_id", deviceId)
+    .single();
+
+  if (!meeting) {
+    res.status(404).json({ error: "Meeting not found" });
+    return;
+  }
+
+  await Promise.allSettled([
+    supabaseAdmin.from("meeting_summaries").delete().eq("meeting_id", id),
+    supabaseAdmin.from("decisions").delete().eq("meeting_id", id),
+    supabaseAdmin.from("action_items").delete().eq("meeting_id", id),
+    supabaseAdmin.from("risks_and_questions").delete().eq("meeting_id", id),
+    supabaseAdmin.from("next_steps").delete().eq("meeting_id", id),
+  ]);
+
+  await supabaseAdmin.from("meetings").delete().eq("id", id).eq("device_id", deviceId);
+
+  res.json({ success: true });
+});
+
 export default router;
