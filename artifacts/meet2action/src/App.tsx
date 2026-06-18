@@ -88,6 +88,7 @@ export default function App() {
     text: "",
     meetingType: "",
     customMeetingType: "",
+    inputSource: "pasted",
   });
   const [overrideData, setOverrideData] = useState<ParsedMeeting | null>(null);
   const [showPastMeetings, setShowPastMeetings] = useState(false);
@@ -131,6 +132,7 @@ export default function App() {
       raw_input: inputState.text,
       title,
       analysis: generatedData,
+      input_source: inputState.inputSource,
     }).then((id) => {
       setPendingItem(null);
       if (id) {

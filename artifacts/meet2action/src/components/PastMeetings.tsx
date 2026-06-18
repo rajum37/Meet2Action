@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Search, Star, ChevronLeft, Loader2, AlertTriangle,
-  Users, CheckSquare, AlertCircle, HelpCircle, ArrowRight, Calendar, Trash2
+  Users, CheckSquare, AlertCircle, HelpCircle, ArrowRight, Calendar, Trash2,
+  Clipboard, FileText
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isThisWeek, isThisMonth, parseISO } from "date-fns";
 import { listMeetings, getMeetingAnalysis, toggleFavorite, deleteMeeting, type MeetingListItem } from "@/lib/api";
@@ -15,6 +16,12 @@ const MEETING_TYPE_LABELS: Record<string, string> = {
   sprint_planning: "Sprint",
   customer_call: "Customer",
   stakeholder_sync: "Stakeholder",
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  pasted: "Pasted",
+  uploaded_txt: "Uploaded (.txt)",
+  uploaded_md: "Uploaded (.md)",
 };
 
 const DATE_FILTERS = ["All", "Today", "This week", "This month"] as const;
@@ -598,6 +605,18 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
                               <p className="text-xs text-[#8A8A85]/70 line-clamp-2 leading-relaxed">
                                 {item.summary}
                               </p>
+                            )}
+                            {item.input_source && SOURCE_LABELS[item.input_source] && (
+                              <div className="mt-1.5 flex items-center gap-1">
+                                {item.input_source === "pasted" ? (
+                                  <Clipboard className="w-2.5 h-2.5 text-[#8A8A85]/35 flex-shrink-0" />
+                                ) : (
+                                  <FileText className="w-2.5 h-2.5 text-[#8A8A85]/35 flex-shrink-0" />
+                                )}
+                                <span className="text-[9px] font-mono text-[#8A8A85]/40 tracking-wide">
+                                  {SOURCE_LABELS[item.input_source]}
+                                </span>
+                              </div>
                             )}
                           </div>
                         </motion.li>

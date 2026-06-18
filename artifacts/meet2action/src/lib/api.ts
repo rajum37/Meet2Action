@@ -7,6 +7,7 @@ export interface MeetingListItem {
   created_at: string;
   summary: string;
   favorite?: boolean;
+  input_source?: string;
 }
 
 export interface SaveMeetingPayload {
@@ -15,11 +16,13 @@ export interface SaveMeetingPayload {
   raw_input: string;
   title: string;
   analysis: ParsedMeeting;
+  input_source?: string;
 }
 
 interface HistoryEntry extends MeetingListItem {
   analysis: ParsedMeeting;
   favorite: boolean;
+  input_source?: string;
 }
 
 const HISTORY_KEY = "m2a_history";
@@ -52,6 +55,7 @@ export async function saveMeeting(
     summary: payload.analysis.summary ?? "",
     analysis: payload.analysis,
     favorite: false,
+    input_source: payload.input_source,
   };
 
   const history = loadHistory();
@@ -84,13 +88,14 @@ export async function listMeetings(
   } catch {}
 
   const history = loadHistory();
-  return history.map(({ id, title, meeting_type, created_at, summary, favorite }) => ({
+  return history.map(({ id, title, meeting_type, created_at, summary, favorite, input_source }) => ({
     id,
     title,
     meeting_type,
     created_at,
     summary,
     favorite,
+    input_source,
   }));
 }
 

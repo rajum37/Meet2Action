@@ -24,6 +24,7 @@ export interface InputPanelState {
   text: string;
   meetingType: MeetingType;
   customMeetingType: string;
+  inputSource: string;
 }
 
 interface InputPanelProps {
@@ -190,10 +191,11 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       }
 
       setUploadError(null);
+      const source = ext === ".txt" ? "uploaded_txt" : "uploaded_md";
       const reader = new FileReader();
       reader.onload = (ev) => {
         const content = (ev.target?.result as string) ?? "";
-        onChange({ ...value, text: value.text ? value.text + "\n\n" + content : content });
+        onChange({ ...value, text: value.text ? value.text + "\n\n" + content : content, inputSource: source });
       };
       reader.readAsText(file);
     },
@@ -205,7 +207,7 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       const sample = SAMPLES[label];
       if (!sample) return;
       trackEvent("demo_chip_clicked", { sample: label, meeting_type: sample.meetingType });
-      onChange({ ...value, text: sample.transcript, meetingType: sample.meetingType, customMeetingType: "" });
+      onChange({ ...value, text: sample.transcript, meetingType: sample.meetingType, customMeetingType: "", inputSource: "pasted" });
     },
     [value, onChange]
   );
