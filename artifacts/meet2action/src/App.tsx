@@ -198,7 +198,7 @@ export default function App() {
       <GradientMesh />
 
       {/* ── Main layout ── */}
-      <div className="flex flex-col md:flex-row md:h-screen pb-8">
+      <div className="flex flex-col md:flex-row md:h-screen">
 
         {/* ── Left sidebar ── */}
         <aside className="w-full md:w-72 md:flex-shrink-0 md:sticky md:top-0 md:h-screen md:overflow-y-auto bg-[#0D0D0E]/90 backdrop-blur-xl md:border-r border-b md:border-b-0 border-white/[0.08] flex flex-col">
@@ -232,7 +232,7 @@ export default function App() {
           </div>
 
           {/* Scrollable body */}
-          <div className="flex-1 p-4 flex flex-col gap-5 overflow-y-auto">
+          <div className="flex-1 p-4 pb-12 flex flex-col gap-5 overflow-y-auto">
             <InputPanel
               value={inputState}
               onChange={setInputState}
