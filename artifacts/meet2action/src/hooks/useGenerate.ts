@@ -24,7 +24,7 @@ interface UseGenerateResult {
   activeStep: number;
   completedSteps: number;
   progressSteps: StepInfo[];
-  generate: (transcript: string, meetingType: string) => Promise<void>;
+  generate: (transcript: string, meetingType: string, customMeetingTypeDescription?: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -36,7 +36,7 @@ export function useGenerate(): UseGenerateResult {
   const [completedSteps, setCompletedSteps] = useState(0);
   const abortRef = useRef(false);
 
-  const generate = useCallback(async (transcript: string, meetingType: string) => {
+  const generate = useCallback(async (transcript: string, meetingType: string, customMeetingTypeDescription?: string) => {
     abortRef.current = false;
     setIsLoading(true);
     setData(null);
@@ -44,7 +44,7 @@ export function useGenerate(): UseGenerateResult {
     setActiveStep(0);
     setCompletedSteps(0);
 
-    const resultPromise = generateFromTranscript(transcript, meetingType);
+    const resultPromise = generateFromTranscript(transcript, meetingType, customMeetingTypeDescription);
 
     for (let i = 0; i < STEP_LABELS.length; i++) {
       if (abortRef.current) return;

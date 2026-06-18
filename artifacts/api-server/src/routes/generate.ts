@@ -18,9 +18,10 @@ Rules:
 - Return ONLY the JSON object, no markdown, no explanation`;
 
 router.post("/generate", async (req, res) => {
-  const { transcript, meetingType } = req.body as {
+  const { transcript, meetingType, customMeetingTypeDescription } = req.body as {
     transcript?: string;
     meetingType?: string;
+    customMeetingTypeDescription?: string;
   };
 
   if (!transcript || typeof transcript !== "string") {
@@ -36,10 +37,15 @@ router.post("/generate", async (req, res) => {
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const meetingTypeLabel =
+    meetingType === "other" && customMeetingTypeDescription?.trim()
+      ? `other (${customMeetingTypeDescription.trim()})`
+      : meetingType || "general";
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `${SYSTEM_PROMPT}\n\nMeeting type: ${meetingType || "general"}\n\nTranscript:\n${transcript}`,
+      contents: `${SYSTEM_PROMPT}\n\nMeeting type: ${meetingTypeLabel}\n\nTranscript:\n${transcript}`,
       config: {
         responseMimeType: "application/json",
         maxOutputTokens: 8192,

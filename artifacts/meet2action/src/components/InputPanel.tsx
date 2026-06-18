@@ -16,12 +16,14 @@ export type MeetingType =
   | "sprint_planning"
   | "customer_call"
   | "stakeholder_sync"
+  | "other"
   | "";
 
 export interface InputPanelState {
   title: string;
   text: string;
   meetingType: MeetingType;
+  customMeetingType: string;
 }
 
 interface InputPanelProps {
@@ -132,6 +134,7 @@ const MEETING_TYPE_OPTIONS: { value: MeetingType; label: string }[] = [
   { value: "sprint_planning", label: "Sprint Planning" },
   { value: "customer_call", label: "Customer Call" },
   { value: "stakeholder_sync", label: "Stakeholder Sync" },
+  { value: "other", label: "Other" },
 ];
 
 const glassBase =
@@ -161,7 +164,13 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
   );
 
   const handleMeetingTypeChange = useCallback(
-    (v: string) => onChange({ ...value, meetingType: v as MeetingType }),
+    (v: string) => onChange({ ...value, meetingType: v as MeetingType, customMeetingType: v !== "other" ? "" : value.customMeetingType }),
+    [value, onChange]
+  );
+
+  const handleCustomMeetingTypeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ ...value, customMeetingType: e.target.value }),
     [value, onChange]
   );
 
@@ -185,7 +194,7 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       const sample = SAMPLES[label];
       if (!sample) return;
       trackEvent("demo_chip_clicked", { sample: label, meeting_type: sample.meetingType });
-      onChange({ ...value, text: sample.transcript, meetingType: sample.meetingType });
+      onChange({ ...value, text: sample.transcript, meetingType: sample.meetingType, customMeetingType: "" });
     },
     [value, onChange]
   );
@@ -345,6 +354,33 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
             ))}
           </SelectContent>
         </Select>
+
+        <AnimatePresence initial={false}>
+          {value.meetingType === "other" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ overflow: "hidden" }}
+            >
+              <input
+                type="text"
+                aria-label="Describe this meeting type"
+                placeholder="Describe this meeting type (optional)"
+                value={value.customMeetingType}
+                onChange={handleCustomMeetingTypeChange}
+                className={[
+                  "w-full h-9 px-3 rounded-lg text-sm font-mono text-[#F5F5F0]",
+                  "bg-white/[0.03] backdrop-blur-xl border border-white/[0.1]",
+                  "placeholder:text-[#8A8A85]/40",
+                  "focus:outline-none focus:border-[#A6FF4D]/30 focus:shadow-[0_0_24px_rgba(166,255,77,0.08)]",
+                  "transition-all duration-200 mt-1.5",
+                ].join(" ")}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Generate button */}

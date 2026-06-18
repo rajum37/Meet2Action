@@ -542,9 +542,12 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
                           exit={{ opacity: 0, y: -4 }}
                           transition={{ duration: 0.15 }}
                         >
-                          <button
+                          <div
+                            role="button"
+                            tabIndex={0}
                             onClick={() => handleSelectItem(item)}
-                            className="w-full text-left rounded-xl p-4 group/item transition-all hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]/50"
+                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSelectItem(item); } }}
+                            className="w-full text-left rounded-xl p-4 group/item transition-all hover:bg-white/[0.04] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]/50"
                             style={{
                               background: "rgba(255,255,255,0.02)",
                               border: "1px solid rgba(255,255,255,0.06)",
@@ -596,7 +599,7 @@ export default function PastMeetings({ deviceId, onSelect, onClose }: PastMeetin
                                 {item.summary}
                               </p>
                             )}
-                          </button>
+                          </div>
                         </motion.li>
                       );
                     })}

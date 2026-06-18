@@ -87,6 +87,7 @@ export default function App() {
     title: "",
     text: "",
     meetingType: "",
+    customMeetingType: "",
   });
   const [overrideData, setOverrideData] = useState<ParsedMeeting | null>(null);
   const [showPastMeetings, setShowPastMeetings] = useState(false);
@@ -147,7 +148,7 @@ export default function App() {
     if (!inputState.text.trim() || !inputState.meetingType) return;
     setOverrideData(null);
     trackEvent("generate_started", { meeting_type: inputState.meetingType });
-    generate(inputState.text, inputState.meetingType);
+    generate(inputState.text, inputState.meetingType, inputState.customMeetingType || undefined);
   }, [inputState, generate]);
 
   const handleSelectAnalysis = useCallback((data: ParsedMeeting) => {

@@ -4,13 +4,14 @@ export type { ParsedMeeting };
 
 export async function generateFromTranscript(
   transcript: string,
-  meetingType: string
+  meetingType: string,
+  customMeetingTypeDescription?: string
 ): Promise<ParsedMeeting> {
   try {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript, meetingType }),
+      body: JSON.stringify({ transcript, meetingType, customMeetingTypeDescription }),
     });
 
     if (!res.ok) throw new Error(`API ${res.status}`);
