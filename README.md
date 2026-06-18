@@ -226,13 +226,18 @@ Screenshot examples to include in Devpost:
 
 Next steps:
 
-- Deeper Novus‑driven iterations (using signals and replays to improve flows).
-- Direct integrations (Slack, email, Jira/Linear) for one‑click publishing.
-- Team workspaces, shared history, and more advanced filters.
+After the hackathon, we want to:
+
+- Use Novus signals and replays to iteratively refine the UX – for example, simplifying the first‑run experience if we see users hesitate on meeting type or copy actions.
+- Add direct integrations (Slack, email, Jira/Linear) so PMs can send summaries and action items with a single click instead of copy‑paste.
+- Introduce team workspaces with shared history, permissions, and more advanced filters (by team, initiative, or project).
+- Add optional user authentication so PMs can access their meetings from any device while keeping the hackathon version frictionless with “continue anonymously”.
+- Support audio uploads by integrating a speech‑to‑text API, so users can drop in recorded meetings and let Meet2Action handle transcription plus analysis end‑to‑end.
+- Expand the “Ask” tab into a richer chat assistant for each meeting, capable of answering deep follow‑up questions like “What did Ravi commit to?”, “What are the risks for launch?”, or “Summarize this for an executive update”.
 
 ---
 
 ## 🔗 Try it out
 
-- **Live app:** https://meet-2-action--rajumokara7.replit.app/  
-- **GitHub repo:** https://github.com/rajum37/meet2action
+- **Live app:** [https://meet-2-action--rajumokara7.replit.app](https://meet-2-action--rajumokara7.replit.app)  
+- **GitHub repo:** [https://github.com/rajum37/meet2action](https://github.com/rajum37/meet2action)
