@@ -1,7 +1,7 @@
 # Meet2Action
 
 Meet2Action is an AI‑powered meeting intelligence tool that turns messy PM meeting notes and transcripts into clear, accountable action plans in seconds. It is fully instrumented with Novus so product teams can see how real users move through the flow and where they get stuck.
-![How Meet2Action works](./assets/meet2action-how-it-works.png)
+![How Meet2Action works](./meet2action-how-it-works.png)
 
 ---
 
