@@ -3,6 +3,12 @@ import { Toaster } from "sonner";
 import App from "./App";
 import "./index.css";
 
+pendo.initialize({
+  visitor: {
+    id: ''
+  }
+});
+
 createRoot(document.getElementById("root")!).render(
   <>
     <App />
