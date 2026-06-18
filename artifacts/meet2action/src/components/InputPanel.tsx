@@ -1,6 +1,6 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Zap, ChevronRight, FileText, Sparkles } from "lucide-react";
+import { Upload, Zap, ChevronRight, FileText, Sparkles, AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -146,8 +146,11 @@ const glassHover =
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#050505]";
 
+const ALLOWED_EXTENSIONS = [".txt", ".md"];
+
 export default function InputPanel({ value, onChange, onGenerate }: InputPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const isReady = value.text.trim().length >= 20 && value.meetingType !== "";
 
@@ -177,14 +180,22 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
   const handleFileUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
+      e.target.value = "";
       if (!file) return;
+
+      const ext = "." + file.name.split(".").pop()?.toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        setUploadError("Right now we support .txt and .md files. For other formats, paste the text into the box.");
+        return;
+      }
+
+      setUploadError(null);
       const reader = new FileReader();
       reader.onload = (ev) => {
         const content = (ev.target?.result as string) ?? "";
         onChange({ ...value, text: value.text ? value.text + "\n\n" + content : content });
       };
       reader.readAsText(file);
-      e.target.value = "";
     },
     [value, onChange]
   );
@@ -299,13 +310,13 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       <input
         ref={fileInputRef}
         type="file"
-        accept=".txt,.md"
+        accept="*"
         className="hidden"
         onChange={handleFileUpload}
       />
       <motion.button
         whileTap={{ scale: 0.97 }}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => { setUploadError(null); fileInputRef.current?.click(); }}
         className={[
           "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm text-[#8A8A85]",
           glassBase,
@@ -315,9 +326,25 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
         ].join(" ")}
       >
         <Upload className="w-3.5 h-3.5" />
-        <span className="font-mono text-xs tracking-wide uppercase">Upload .txt</span>
+        <span className="font-mono text-xs tracking-wide uppercase">Upload .txt / .md</span>
         <FileText className="w-3 h-3 opacity-40" />
       </motion.button>
+
+      <AnimatePresence initial={false}>
+        {uploadError && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
+            style={{ background: "rgba(255,80,80,0.06)", border: "1px solid rgba(255,80,80,0.18)" }}
+          >
+            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-red-400/90 leading-relaxed">{uploadError}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Meeting type */}
       <div className="flex flex-col gap-1.5">
