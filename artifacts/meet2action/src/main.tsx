@@ -2,11 +2,11 @@ import { createRoot } from "react-dom/client";
 import { Toaster } from "sonner";
 import App from "./App";
 import "./index.css";
+import { getOrCreateDeviceId } from "./lib/deviceId";
 
 pendo.initialize({
-  visitor: {
-    id: ''
-  }
+  visitor: { id: getOrCreateDeviceId() },
+  account: { id: "meet2action-web" }
 });
 
 createRoot(document.getElementById("root")!).render(

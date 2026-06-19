@@ -146,6 +146,20 @@ export default function App() {
     checkSupabaseConnection();
   }, []);
 
+  useEffect(() => {
+    if (view === "main" && profile) {
+      pendo.identify({
+        visitor: {
+          id: deviceId,
+          email: profile.email || undefined,
+          full_name: profile.name || undefined,
+          is_anonymous: profile.isAnonymous,
+        },
+        account: { id: "meet2action-web" }
+      });
+    }
+  }, [view, profile, deviceId]);
+
   const handleGenerate = useCallback(() => {
     if (!inputState.text.trim() || !inputState.meetingType) return;
     setOverrideData(null);
@@ -191,7 +205,8 @@ export default function App() {
               full_name: p.name || undefined,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-            }
+            },
+            account: { id: "meet2action-web" }
           });
         }}
       />
@@ -258,6 +273,7 @@ export default function App() {
                 setShowPastMeetings(true);
                 trackEvent("past_meetings_button_clicked");
               }}
+              data-pendo="open-past-meetings"
               className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-[#8A8A85] hover:text-[#F5F5F0] hover:bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.15] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]/50"
             >
               <History className="w-3.5 h-3.5" />

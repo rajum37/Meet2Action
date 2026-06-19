@@ -296,6 +296,7 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={handleUseSample}
+        data-pendo="use-sample"
         className={[
           "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm text-[#8A8A85]",
           glassBase,
@@ -319,6 +320,7 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={() => { setUploadError(null); fileInputRef.current?.click(); }}
+        data-pendo="upload-file"
         className={[
           "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm text-[#8A8A85]",
           glassBase,
@@ -420,6 +422,7 @@ export default function InputPanel({ value, onChange, onGenerate }: InputPanelPr
           disabled={!isReady}
           aria-disabled={!isReady}
           aria-label="Extract actions from transcript"
+          data-pendo="extract-actions"
           className={[
             "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold",
             "transition-all duration-200",

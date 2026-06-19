@@ -88,6 +88,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={onGetStarted}
+            data-pendo="get-started"
             className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-semibold bg-[#A6FF4D] text-[#050505] hover:bg-[#B8FF6A] hover:shadow-[0_0_50px_rgba(166,255,77,0.4)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]"
           >
             <Zap className="w-4 h-4" />
