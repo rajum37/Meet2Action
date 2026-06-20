@@ -131,14 +131,17 @@ const focusRing =
 function CopyButton({
   label,
   onClick,
+  "data-pendo": dataPendo,
 }: {
   label: string;
   onClick: () => void;
+  "data-pendo"?: string;
 }) {
   return (
     <motion.button
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
+      data-pendo={dataPendo}
       className={[
         "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono tracking-wide",
         "border border-[#A6FF4D]/20 text-[#A6FF4D]/80",
@@ -176,14 +179,17 @@ export default function ActionBar({ data }: { data: ParsedMeeting }) {
         <CopyButton
           label="Copy summary"
           onClick={() => copyText(formatSummary(data), "copy_clicked")}
+          data-pendo="copy-summary"
         />
         <CopyButton
           label="Copy action items"
           onClick={() => copyText(formatActionItems(data), "copy_clicked")}
+          data-pendo="copy-actions"
         />
         <CopyButton
           label="Copy full report"
           onClick={() => copyText(formatFullReport(data), "copy_clicked")}
+          data-pendo="copy-full-report"
         />
       </div>
 

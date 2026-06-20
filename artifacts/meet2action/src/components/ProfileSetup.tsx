@@ -115,6 +115,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleSave}
+              data-pendo="save-profile"
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold bg-[#A6FF4D] text-[#050505] hover:bg-[#B8FF6A] hover:shadow-[0_0_40px_rgba(166,255,77,0.35)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A6FF4D]"
             >
               Save & continue
@@ -123,6 +124,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
 
             <button
               onClick={handleAnonymous}
+              data-pendo="continue-anonymous"
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm text-[#8A8A85] hover:text-[#F5F5F0] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             >
               <UserX className="w-3.5 h-3.5" />
